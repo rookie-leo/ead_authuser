@@ -1,8 +1,10 @@
 package com.ead.authuser.service.impl;
 
+import com.ead.authuser.exceptions.NotFoundException;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.service.UserService;
+import org.apache.catalina.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,7 +27,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<UserModel> findById(UUID userId) {
-        return userRepository.findById(userId);
+        Optional<UserModel> userModelOptional = userRepository.findById(userId);
+
+        if (userModelOptional.isEmpty()) {
+            throw new NotFoundException("User not found!");
+        }
+
+        return userModelOptional;
     }
 
     @Override
