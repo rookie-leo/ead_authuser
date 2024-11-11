@@ -1,5 +1,6 @@
 package com.ead.authuser.service;
 
+import com.ead.authuser.controllers.dtos.UserRecordDto;
 import com.ead.authuser.models.UserModel;
 
 import java.util.List;
@@ -12,4 +13,10 @@ public interface UserService {
     Optional<UserModel> findById(UUID userId);
 
     void delete(UserModel userModel);
+
+    UserModel registerUser(UserRecordDto userRecordDto);
+
+    boolean existsByUserName(String userName);
+
+    boolean existsByEmail(String email);
 }
