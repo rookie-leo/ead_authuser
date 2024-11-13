@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
+import org.springframework.hateoas.RepresentationModel;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "TB_USERS")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserModel implements Serializable {
+public class UserModel extends RepresentationModel<UserModel> implements Serializable{
     private static final long serialVersionUID = 1L;
 
     @Id
