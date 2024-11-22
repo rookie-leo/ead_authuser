@@ -1,29 +1,34 @@
 server:
-    port: 8087
-    servlet:
-        context-path: '/ead-authuser/'
+  port: 8087
+  servlet:
+    context-path: '/ead-authuser/'
 
 spring:
-    datasource:
-        url: jdbc:postgresql://localhost:5432/ead-authuser
-        username: postgres
-        password: admin
-    jpa:
-        hibernate:
-            ddl-auto: update
-            dialect: org.hibernate.dialect.PostgreSQLDialect
-            jdbc:
-                lob.non-contextual-creation: true
-        properties:
-            hibernate:
-                show_sql: true
-    output:
-        ansi:
-            enabled: Always
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ead-authuser
+    username: postgres
+    password: admin
+  jpa:
+    hibernate:
+      ddl-auto: update
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+      jdbc:
+        lob.non-contextual-creation: true
+    properties:
+      hibernate:
+        show_sql: true
+  output:
+    ansi:
+      enabled: Always
+
+ead:
+  api:
+    url:
+      course: 'http://localhost:8082/ead-course'
 
 logging:
-    level:
-        com.ead: TRACE
-        root: INFO
-        org.springframework.web: DEBUG
-        org.hibernate: INFO
+  level:
+    com.ead: TRACE
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate: INFO
