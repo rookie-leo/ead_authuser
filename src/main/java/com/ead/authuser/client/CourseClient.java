@@ -32,6 +32,7 @@ public class CourseClient {
     public Page<CourseRecordDto> getAllCoursesByUser(UUID userId, Pageable pageable) {
         String url = baseUrlCourse + "/courses?userId=" + userId + "&page=" + pageable.getPageNumber() + "&size="
                 + pageable.getPageSize() + "&sort=" + pageable.getSort().toString().replaceAll(": ", ",");
+        logger.debug("Request to URL: {}", url);
 
         try {
             return restClient.get()
