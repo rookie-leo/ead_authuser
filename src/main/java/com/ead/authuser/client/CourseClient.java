@@ -1,9 +1,11 @@
 package com.ead.authuser.client;
 
 import com.ead.authuser.controllers.dtos.CourseRecordDto;
+import com.ead.authuser.controllers.dtos.ResponsePageDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -32,7 +34,10 @@ public class CourseClient {
                 + pageable.getPageSize() + "&sort=" + pageable.getSort().toString().replaceAll(": ", ",");
 
         try {
-            return null;
+            return restClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<ResponsePageDto<CourseRecordDto>>() {});
         } catch (RestClientException ex) {
             logger.error("Error Request RestClient with cause: {}", ex.getMessage());
             throw new RuntimeException("Error Request RestClient", ex);
