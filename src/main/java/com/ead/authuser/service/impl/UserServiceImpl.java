@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.ead.authuser.enums.UserType.INSTRUCTOR;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -97,6 +99,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserModel updateImage(UserRecordDto userRecordDto, UserModel userModel) {
         userModel.setImageUrl(userRecordDto.imageUrl());
+        userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
+
+        return userRepository.save(userModel);
+    }
+
+    @Override
+    public UserModel registerInstructor(UserModel userModel) {
+        userModel.setUserType(INSTRUCTOR);
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
 
         return userRepository.save(userModel);
