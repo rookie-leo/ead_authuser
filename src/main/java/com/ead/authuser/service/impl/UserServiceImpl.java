@@ -5,9 +5,7 @@ import com.ead.authuser.controllers.dtos.UserRecordDto;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
 import com.ead.authuser.exceptions.NotFoundException;
-import com.ead.authuser.models.UserCourseModel;
 import com.ead.authuser.models.UserModel;
-import com.ead.authuser.repositories.UserCourseRepository;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.service.UserService;
 import org.springframework.beans.BeanUtils;
@@ -29,12 +27,10 @@ import static com.ead.authuser.enums.UserType.INSTRUCTOR;
 public class UserServiceImpl implements UserService {
 
     final UserRepository userRepository;
-    final UserCourseRepository userCourseRepository;
     final CourseClient courseClient;
 
-    public UserServiceImpl(UserRepository userRepository, UserCourseRepository userCourseRepository, CourseClient courseClient) {
+    public UserServiceImpl(UserRepository userRepository, CourseClient courseClient) {
         this.userRepository = userRepository;
-        this.userCourseRepository = userCourseRepository;
         this.courseClient = courseClient;
     }
 
@@ -62,16 +58,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void delete(UserModel userModel) {
-        List<UserCourseModel> userCourseModelList = userCourseRepository.findAllUserCourseIntoUser(userModel.getUserId());
-        boolean deleteUserCourseInCourse = false;
-
-        if (!userCourseModelList.isEmpty()) {
-            userCourseRepository.deleteAll(userCourseModelList);
-            deleteUserCourseInCourse = true;
-        }
-
         userRepository.delete(userModel);
-        if (deleteUserCourseInCourse) courseClient.deleteUserCourseInCourse(userModel.getUserId());
     }
 
     @Override
