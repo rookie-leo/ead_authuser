@@ -2,12 +2,12 @@ package com.ead.authuser.service.impl;
 
 import com.ead.authuser.client.CourseClient;
 import com.ead.authuser.controllers.dtos.UserRecordDto;
+import com.ead.authuser.enums.ActionType;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
 import com.ead.authuser.exceptions.NotFoundException;
-import com.ead.authuser.models.UserCourseModel;
 import com.ead.authuser.models.UserModel;
-import com.ead.authuser.repositories.UserCourseRepository;
+import com.ead.authuser.publishers.UserEventPublisher;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.service.UserService;
 import org.springframework.beans.BeanUtils;
@@ -28,14 +28,14 @@ import static com.ead.authuser.enums.UserType.INSTRUCTOR;
 @Service
 public class UserServiceImpl implements UserService {
 
+    final UserEventPublisher userEventPublisher;
     final UserRepository userRepository;
-    final UserCourseRepository userCourseRepository;
     final CourseClient courseClient;
 
-    public UserServiceImpl(UserRepository userRepository, UserCourseRepository userCourseRepository, CourseClient courseClient) {
+    public UserServiceImpl(UserRepository userRepository, CourseClient courseClient, UserEventPublisher userEventPublisher) {
         this.userRepository = userRepository;
-        this.userCourseRepository = userCourseRepository;
         this.courseClient = courseClient;
+        this.userEventPublisher = userEventPublisher;
     }
 
     @Override
@@ -62,18 +62,11 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void delete(UserModel userModel) {
-        List<UserCourseModel> userCourseModelList = userCourseRepository.findAllUserCourseIntoUser(userModel.getUserId());
-        boolean deleteUserCourseInCourse = false;
-
-        if (!userCourseModelList.isEmpty()) {
-            userCourseRepository.deleteAll(userCourseModelList);
-            deleteUserCourseInCourse = true;
-        }
-
         userRepository.delete(userModel);
-        if (deleteUserCourseInCourse) courseClient.deleteUserCourseInCourse(userModel.getUserId());
+        userEventPublisher.publishUserEvent(userModel.convertToUserEventDto(ActionType.DELETE));
     }
 
+    @Transactional
     @Override
     public UserModel registerUser(UserRecordDto userRecordDto) {
         var userModel = new UserModel();
@@ -84,7 +77,10 @@ public class UserServiceImpl implements UserService {
         userModel.setCreationDate(LocalDateTime.now(ZoneId.of("UTC")));
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
 
-        return userRepository.save(userModel);
+        userRepository.save(userModel);
+        userEventPublisher.publishUserEvent(userModel.convertToUserEventDto(ActionType.CREATE));
+
+        return userModel;
     }
 
     @Override
@@ -97,13 +93,17 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByEmail(email);
     }
 
+    @Transactional
     @Override
     public UserModel updateUser(UserRecordDto userRecordDto, UserModel userModel) {
         userModel.setFullName(userRecordDto.fullName());
         userModel.setPhoneNumber(userRecordDto.phoneNumber());
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
 
-        return userRepository.save(userModel);
+        userRepository.save(userModel);
+        userEventPublisher.publishUserEvent(userModel.convertToUserEventDto(ActionType.UPDATE));
+
+        return userModel;
     }
 
     @Override
@@ -114,19 +114,27 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(userModel);
     }
 
+    @Transactional
     @Override
     public UserModel updateImage(UserRecordDto userRecordDto, UserModel userModel) {
         userModel.setImageUrl(userRecordDto.imageUrl());
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
 
-        return userRepository.save(userModel);
+        userRepository.save(userModel);
+        userEventPublisher.publishUserEvent(userModel.convertToUserEventDto(ActionType.UPDATE));
+
+        return userModel;
     }
 
+    @Transactional
     @Override
     public UserModel registerInstructor(UserModel userModel) {
         userModel.setUserType(INSTRUCTOR);
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
 
-        return userRepository.save(userModel);
+        userRepository.save(userModel);
+        userEventPublisher.publishUserEvent(userModel.convertToUserEventDto(ActionType.UPDATE));
+
+        return userModel;
     }
 }

@@ -7,26 +7,31 @@ spring:
   application:
     name: ead-authuser-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/ead-authuser
+    url: jdbc:postgresql://localhost:5432/ead-authuser-v2
     username: postgres
     password: admin
   jpa:
     hibernate:
       ddl-auto: update
-      dialect: org.hibernate.dialect.PostgreSQLDialect
-      jdbc:
-        lob.non-contextual-creation: true
+    show-sql: true
     properties:
       hibernate:
-        show_sql: true
+        jdbc:
+          lob:
+            non-contextual-creation: true
   output:
     ansi:
       enabled: Always
+  rabbitmq:
+    addresses: amqps://fyjxcxnd:iNDNc7vrsiFS2jV46ff1CIuteTJ-jwbN@shark.rmq.cloudamqp.com/fyjxcxnd
 
 ead:
   api:
     url:
       course: 'http://ead-course-service/ead-course'
+  broker:
+    exchange:
+      userEvent: ead.userevent
 
 logging:
   level:
@@ -41,3 +46,19 @@ eureka:
       defaultZone: 'http://localhost:8761/eureka'
   instance:
     hostname: localhost
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      circuitbreakerInstance:
+        slidingWindowSize: 30
+        permittedNumberOfCallsInHalfOpenState: 2
+        slidingWindowType: TIME_BASED
+        minimumNumberOfCalls: 2
+        waitDurationInOpenState: 15s
+        failureRateThreshold: 80
+  retry:
+    instances:
+      retryInstance:
+        maxAttempts: 3
+        waitDuration: 5s
