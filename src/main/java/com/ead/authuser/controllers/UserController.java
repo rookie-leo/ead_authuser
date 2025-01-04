@@ -1,5 +1,7 @@
 package com.ead.authuser.controllers;
 
+import com.ead.authuser.configs.security.AuthenticationCurrentUserService;
+import com.ead.authuser.configs.security.UserDetailsImpl;
 import com.ead.authuser.controllers.dtos.UserRecordDto;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.service.UserService;
@@ -11,6 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,16 +33,23 @@ public class UserController {
     Logger logger = LogManager.getLogger(UserController.class);
 
     final UserService userService;
+    final AuthenticationCurrentUserService authenticationCurrentUserService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AuthenticationCurrentUserService authenticationCurrentUserService) {
         this.userService = userService;
+        this.authenticationCurrentUserService = authenticationCurrentUserService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping
     public ResponseEntity<Page<UserModel>> getAllUsers(
             SpecificationTemplate.UserSpec spec,
-            Pageable pageable
+            Pageable pageable,
+            Authentication authentication
             ) {
+        UserDetails userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        logger.info("Authentication {} ", userDetails.getUsername());
+
         Page<UserModel> userModelPage = userService.findAll(spec, pageable);
 
         if (!userModelPage.isEmpty()) {
@@ -48,9 +61,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userModelPage);
     }
 
+    @PreAuthorize("hasAnyRole('USER')")
     @GetMapping("/{userId}")
     public ResponseEntity<Object> getUser(@PathVariable(value = "userId") UUID userId) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.findById(userId).get());
+        UUID currentUserId = authenticationCurrentUserService.getCurrentUser().getUserId();
+        if (currentUserId.equals(userId)) {
+            return ResponseEntity.status(HttpStatus.OK).body(userService.findById(userId).get());
+        } else {
+            throw new AccessDeniedException("Forbidden");
+        }
     }
 
     @DeleteMapping("/{userId}")
