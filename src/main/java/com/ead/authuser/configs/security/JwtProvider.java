@@ -10,11 +10,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtProvider {
@@ -29,9 +31,12 @@ public class JwtProvider {
 
     public String generateJwt(Authentication auth) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) auth.getPrincipal();
+        final String roles = userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         return Jwts.builder()
-                .subject(userPrincipal.getUserName())
+                .subject(userPrincipal.getUserId().toString())
+                .claim("roles", roles)
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSecretKey())
@@ -42,7 +47,7 @@ public class JwtProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String getUserNameJwt(String token) {
+    public String getSubjectJwt(String token) {
         return Jwts.parser()
                 .verifyWith(getSecretKey())
                 .build()
