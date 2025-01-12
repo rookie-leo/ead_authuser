@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
@@ -75,11 +76,18 @@ public class UserController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('USER')")
     @DeleteMapping("/{userId}")
     public ResponseEntity<Object> deleteUser(@PathVariable(value = "userId") UUID userId) {
-        logger.debug("DELETE deleteUser userId: {}", userId);
-        userService.delete(userService.findById(userId).get());
-        return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully!");
+        var currentUser = authenticationCurrentUserService.getCurrentUser();
+
+        if (currentUser.getUserId().equals(userId) || currentUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            logger.debug("DELETE deleteUser userId: {}", userId);
+            userService.delete(userService.findById(userId).get());
+            return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully!");
+        } else {
+            throw new AccessDeniedException("Forbidden");
+        }
     }
 
     @PutMapping("/{userId}")
@@ -87,8 +95,14 @@ public class UserController {
             @PathVariable(value = "userId") UUID userId,
             @RequestBody @Validated(UserRecordDto.UserView.UserPut.class) @JsonView(UserRecordDto.UserView.UserPut.class) UserRecordDto userRecordDto
     ) {
-        logger.debug("PUT updateUser userId: {}", userId);
-        return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userRecordDto, userService.findById(userId).get()));
+        var currentUser = authenticationCurrentUserService.getCurrentUser();
+
+        if (currentUser.getUserId().equals(userId) || currentUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            logger.debug("PUT updateUser userId: {}", userId);
+            return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userRecordDto, userService.findById(userId).get()));
+        } else {
+            throw new AccessDeniedException("Forbidden");
+        }
     }
 
     @PutMapping("/{userId}/password")
