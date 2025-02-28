@@ -168,4 +168,13 @@ public class UserServiceImpl implements UserService {
 
         return userModel;
     }
+
+    @Transactional
+    @Override
+    public UserModel updateUserByPaymentEvents(UserModel userModel) {
+        userRepository.save(userModel);
+        userEventPublisher.publishUserEvent(userModel.convertToUserEventDto(ActionType.UPDATE));
+
+        return userModel;
+    }
 }
